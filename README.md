@@ -20,6 +20,41 @@ lifecycle. Pure PHP — no Laravel container, no service provider, nothing to re
 composer require phattarachai/ops-core
 ```
 
+## What's inside
+
+| Namespace | What it does |
+|---|---|
+| `Histogram\LatencyHistogram` | 13 fixed latency bands (0.1 s … 300 s + open tail). Histograms merge by summing, so a percentile over any window comes from the merged bands — never from averaging per-bucket percentiles. |
+| `Rollup\Bucket`, `Rollup\Grain` | A mergeable aggregate (count, sum, max, histogram, named counters) and minute / hour / day truncation. Fold minute buckets into hours with `Bucket::sum()`. |
+| `Time\WindowPlan` | Which grain a reporting window reads and how many display bars it gets, from the span alone. |
+| `Health\HealthClassifier` | Baseline-relative health: a jump against the subject's own trailing baseline is an `Incident`, a constant failure is `KnownBroken`, and an absolute floor (20 % by default) stops a chronically failing subject from ever reading healthy. Thresholds live in `HealthPolicy`. |
+| `Failures\FailureGrouper` | Folds failed runs or calls into incidents: same exception and message (numbers masked), each within 3 minutes of the last. |
+| `Schedule\MissedTicks` | Counts cron ticks no run started within the grace window after. |
+| `Alerts\*` | Rule evaluation and the incident lifecycle (below). |
+
+### Alerts
+
+A `RuleSpec` is one of four types:
+
+| Type | Fires when | `threshold` means |
+|---|---|---|
+| `threshold` | a signal's count per key (or distinct `distinctField` values per key) reaches N within `windowSeconds` | N |
+| `rate` | `signal` ÷ `denominatorSignal` per key reaches a percentage, given at least `minSamples` | percent |
+| `absence` | a key has not been seen for X seconds (heartbeats, schedules) | seconds |
+| `state` | a probe's latest reading reaches `minLevel` (warning / critical) | — |
+
+`AlertEngine::runRule()` evaluates one rule and reconciles its incidents (one per rule × key):
+
+- **open** on the first breach and notify;
+- **escalate** at once when severity rises; otherwise **remind** once `cooldownSeconds` have passed since the last notice;
+- **resolve** once the rule has stayed clear for `resolveAfterSeconds`, and say so if anyone was told it opened;
+- a **muted** rule keeps tracking incidents but sends nothing until the mute ends; a rule switched off, or outside its
+  `environments`, resolves its open incidents silently.
+
+Storage and delivery sit behind three interfaces the host implements: `SignalReader` (counts, distinct counts, last
+seen, probe states), `IncidentStore`, and `IncidentChannel` (mail, Slack, …). The engine returns `IncidentNotice`s;
+sending them is the caller's job.
+
 ## Development
 
 ```bash
