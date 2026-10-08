@@ -11,8 +11,7 @@ Framework-free core of the Ops monitoring suite: rollup math, latency histograms
 lifecycle. Pure PHP — no Laravel container, no service provider, nothing to register. The Laravel integration lives in
 [`phattarachai/ops-laravel`](https://github.com/phattarachai/ops-laravel).
 
-> **Status: pre-release, under construction.** Nothing is tagged yet and the API will change without notice until
-> `v0.1.0`. Don't depend on it in production.
+> **Status: 0.x.** The API can still change between minor versions until `v1.0`.
 
 ## Install
 
