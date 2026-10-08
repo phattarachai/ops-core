@@ -5,7 +5,7 @@
 Framework-free core of the Ops monitoring suite: rollup math, latency histograms, alert rule evaluation and incident
 lifecycle. The Laravel side — recorders, storage, queue/schedule wiring, the Inertia dashboard, mail and Slack
 delivery — lives in [`phattarachai/ops-laravel`](https://github.com/phattarachai/ops-laravel) (sibling checkout at
-`/Users/phatchai/www/packages/ops-laravel`), which consumes this package.
+`../ops-laravel`), which consumes this package.
 
 ## Rules
 
