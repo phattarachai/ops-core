@@ -28,7 +28,7 @@ composer require phattarachai/ops-core
 | `Time\WindowPlan` | Which grain a reporting window reads and how many display bars it gets, from the span alone. |
 | `Health\HealthClassifier` | Baseline-relative health: a jump against the subject's own trailing baseline is an `Incident`, a constant failure is `KnownBroken`, and an absolute floor (20 % by default) stops a chronically failing subject from ever reading healthy. Thresholds live in `HealthPolicy`. |
 | `Failures\FailureGrouper` | Folds failed runs or calls into incidents: same exception and message (numbers masked), each within 3 minutes of the last. |
-| `Schedule\MissedTicks` | Counts cron ticks no run started within the grace window after. |
+| `Schedule\MissedTicks` | Counts cron ticks no run started within the grace window after, skipping ticks inside excused windows (deploys). |
 | `Alerts\*` | Rule evaluation and the incident lifecycle (below). |
 
 ### Alerts
@@ -45,7 +45,8 @@ A `RuleSpec` is one of four types:
 `AlertEngine::runRule()` evaluates one rule and reconciles its incidents (one per rule × key):
 
 - **open** on the first breach and notify;
-- **escalate** at once when severity rises; otherwise **remind** once `cooldownSeconds` have passed since the last notice;
+- **escalate** at once when severity rises; otherwise **remind** once `cooldownSeconds` have passed since the last notice
+  (with `remindWarnings: false`, only critical incidents get reminders; warnings notify on open and resolve only);
 - **resolve** once the rule has stayed clear for `resolveAfterSeconds`, and say so if anyone was told it opened;
 - a **muted** rule keeps tracking incidents but sends nothing until the mute ends; a rule switched off, or outside its
   `environments`, resolves its open incidents silently.

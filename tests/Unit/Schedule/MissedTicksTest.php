@@ -18,3 +18,12 @@ it('lets one run cover one tick only', function (): void {
 it('treats a skip row like a run', function (): void {
     expect(MissedTicks::count([0], [0]))->toBe(0);
 });
+
+it('never counts a tick inside an excused window', function (): void {
+    $ticks = [0, 60, 120, 180];
+    $seen = [2, 182];
+
+    expect(MissedTicks::count($ticks, $seen, graceSeconds: 30, excused: [[50, 130]]))->toBe(0)
+        ->and(MissedTicks::count($ticks, $seen, graceSeconds: 30, excused: [[50, 100]]))->toBe(1)
+        ->and(MissedTicks::count($ticks, $seen, graceSeconds: 30))->toBe(2);
+});
