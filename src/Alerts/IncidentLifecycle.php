@@ -8,7 +8,8 @@ use DateTimeImmutable;
 
 /**
  * Open → re-notify after the cooldown (or at once on escalation) → resolve once the rule has
- * stayed clear for `resolveAfterSeconds`. A silent pass moves state but sends nothing.
+ * stayed clear for `resolveAfterSeconds`. A silent pass moves state but sends nothing. A rule
+ * with `remindWarnings` off only reminds about critical incidents.
  */
 final class IncidentLifecycle
 {
@@ -78,9 +79,15 @@ final class IncidentLifecycle
         return match (true) {
             $after->severity->outranks($before->severity) => NoticeKind::Escalated,
             $sinceNotified === null => NoticeKind::Opened,
+            ! $this->remindable($rule, $after) => null,
             $rule->cooldownSeconds > 0 && $sinceNotified >= $rule->cooldownSeconds => NoticeKind::Reminder,
             default => null,
         };
+    }
+
+    private function remindable(RuleSpec $rule, Incident $incident): bool
+    {
+        return $rule->remindWarnings || $incident->severity === Severity::Critical;
     }
 
     private function record(RuleSpec $rule, Incident $incident, ?NoticeKind $kind, DateTimeImmutable $now, bool $silent): void

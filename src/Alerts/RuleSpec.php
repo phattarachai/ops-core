@@ -9,6 +9,7 @@ use DateTimeImmutable;
 /**
  * A stored alert rule, framework-free. `threshold` is a count (threshold), a percentage (rate)
  * or seconds since last seen (absence); state rules compare against `minLevel` instead.
+ * `remindWarnings: false` keeps reminders for critical incidents only.
  */
 final readonly class RuleSpec
 {
@@ -37,6 +38,7 @@ final readonly class RuleSpec
         public bool $active = true,
         public ?DateTimeImmutable $mutedUntil = null,
         public bool $notifyOnResolve = true,
+        public bool $remindWarnings = true,
     ) {}
 
     public function isMuted(DateTimeImmutable $now): bool

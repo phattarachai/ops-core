@@ -99,3 +99,20 @@ it('does not announce a resolve nobody was told about', function (): void {
 
     expect($this->engine->runRule($this->rule, ($this->at)(10)))->toBe([]);
 });
+
+it('reminds about critical incidents only when warnings are not reminded', function (): void {
+    $state = new RuleSpec(9, 'schedule', RuleType::State, 'schedule.health', cooldownSeconds: 900, remindWarnings: false);
+    $reading = fn (ProbeLevel $level): array => ['task' => new ProbeReading($level, $this->start)];
+
+    $this->signals->states['schedule.health'] = $reading(ProbeLevel::Warning);
+    expect(($this->kinds)($this->engine->runRule($state, ($this->at)(0))))->toBe([NoticeKind::Opened])
+        ->and($this->engine->runRule($state, ($this->at)(15)))->toBe([])
+        ->and($this->engine->runRule($state, ($this->at)(60)))->toBe([]);
+
+    $this->signals->states['schedule.health'] = $reading(ProbeLevel::Critical);
+    expect(($this->kinds)($this->engine->runRule($state, ($this->at)(61))))->toBe([NoticeKind::Escalated])
+        ->and(($this->kinds)($this->engine->runRule($state, ($this->at)(76))))->toBe([NoticeKind::Reminder]);
+
+    $this->signals->states['schedule.health'] = [];
+    expect(($this->kinds)($this->engine->runRule($state, ($this->at)(82))))->toBe([NoticeKind::Resolved]);
+});
